@@ -6,8 +6,10 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AllExpenses from "./screens/AllExpenses";
 import ManageExpenses from "./screens/ManageExpenses";
 import RecentExpenses from "./screens/RecentExpenses";
+import IconButton from "./components/atoms/IconButton";
 import { Colors } from "./constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
+import ExpensesContextProvider from "./store/expenses-context";
 
 const Stack = createNativeStackNavigator();
 const BottomTabs = createBottomTabNavigator();
@@ -15,7 +17,7 @@ const BottomTabs = createBottomTabNavigator();
 const ExpensesTabs = () => {
   return (
     <BottomTabs.Navigator
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerStyle: {
           backgroundColor: Colors.primary200,
         },
@@ -25,7 +27,17 @@ const ExpensesTabs = () => {
         },
         tabBarActiveTintColor: "#fff",
         tabBarInactiveTintColor: Colors.primary500,
-      }}
+        headerRight: ({ tintColor }) => (
+          <IconButton
+            icon="add"
+            size={24}
+            color={tintColor || "#fff"}
+            onPress={() => {
+              navigation.navigate("ManageExpenses");
+            }}
+          />
+        ),
+      })}
     >
       <BottomTabs.Screen
         name="RecentExpenses"
@@ -56,17 +68,31 @@ const ExpensesTabs = () => {
 const App = () => {
   return (
     <>
-      <StatusBar style="auto" />
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen
-            name="Expenses"
-            component={ExpensesTabs}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="ManageExpenses" component={ManageExpenses} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <StatusBar style="light" />
+      <ExpensesContextProvider>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerStyle: { backgroundColor: Colors.primary200 },
+              headerTintColor: "#fff",
+            }}
+          >
+            <Stack.Screen
+              name="Expenses"
+              component={ExpensesTabs}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ManageExpenses"
+              component={ManageExpenses}
+              options={{
+                title: "Manage Expense",
+                presentation: "modal",
+              }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ExpensesContextProvider>
     </>
   );
 };

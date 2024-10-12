@@ -1,15 +1,26 @@
 import { Colors } from "@/constants/Colors";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackNavigationProp } from "@/types/RootStackTypes";
 
 type Props = {
+  id: string;
   description: string;
   amount: number;
   date: Date;
 };
 
-const ExpensesItem = ({ description, amount, date }: Props) => {
+const ExpensesItem = ({ id, description, amount, date }: Props) => {
+  const navigation: RootStackNavigationProp = useNavigation();
+
+  const pressHandler = () => {
+    navigation.navigate("ManageExpenses", {
+      expenseId: id,
+    });
+  };
+
   return (
-    <Pressable style={styles.container}>
+    <TouchableOpacity onPress={pressHandler} style={styles.container}>
       <View>
         <Text style={[styles.text, styles.description]}>{description}</Text>
         <Text style={styles.text}>{date.toLocaleDateString()}</Text>
@@ -17,7 +28,7 @@ const ExpensesItem = ({ description, amount, date }: Props) => {
       <View style={styles.amountContainer}>
         <Text style={styles.amount}>${amount.toFixed(2)}</Text>
       </View>
-    </Pressable>
+    </TouchableOpacity>
   );
 };
 
