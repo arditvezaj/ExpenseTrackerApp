@@ -11,6 +11,7 @@ import { Colors } from "@/constants/Colors";
 import { ExpenseProps } from "@/types/ExpenseProps";
 import { storeExpense, updateExpense, deleteExpense } from "@/utils/http";
 import LoadingOverlay from "@/components/atoms/LoadingOverlay";
+import ErrorOverlay from "@/components/atoms/ErrorOverlay";
 
 type Props = {
   route?: RootStackRouteProp;
@@ -19,6 +20,8 @@ type Props = {
 
 const ManageExpenses = ({ route, navigation }: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   const editedExpenseId = route?.params?.expenseId;
   const isEditing = Boolean(editedExpenseId);
   const {
@@ -44,22 +47,36 @@ const ManageExpenses = ({ route, navigation }: Props) => {
 
   const deleteHandler = async () => {
     setIsSubmitting(true);
-    await deleteExpense(editedExpenseId || "");
-    deleteExpenseCtx(editedExpenseId || "");
-    navigation?.goBack();
+    try {
+      await deleteExpense(editedExpenseId || "");
+      deleteExpenseCtx(editedExpenseId || "");
+      navigation?.goBack();
+    } catch (error) {
+      setError("Could not delete expense!");
+      setIsSubmitting(false);
+    }
   };
 
   const confirmHandler = async (expenseData: ExpenseProps) => {
     setIsSubmitting(true);
-    if (isEditing) {
-      updateExpenseCtx(editedExpenseId || "", expenseData);
-      await updateExpense(editedExpenseId || "", expenseData);
-    } else {
-      const id = await storeExpense(expenseData);
-      addExpense({ id, ...expenseData });
+    try {
+      if (isEditing) {
+        updateExpenseCtx(editedExpenseId || "", expenseData);
+        await updateExpense(editedExpenseId || "", expenseData);
+      } else {
+        const id = await storeExpense(expenseData);
+        addExpense({ id, ...expenseData });
+      }
+    } catch (error) {
+      setError("Could not save data!");
+      setIsSubmitting(false);
     }
     navigation?.goBack();
   };
+
+  if (error && !isSubmitting) {
+    return <ErrorOverlay message={error} />;
+  }
 
   if (isSubmitting) {
     return <LoadingOverlay />;
