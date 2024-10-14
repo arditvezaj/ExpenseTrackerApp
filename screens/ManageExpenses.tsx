@@ -1,4 +1,4 @@
-import { useLayoutEffect, useContext } from "react";
+import { useState, useLayoutEffect, useContext } from "react";
 import { View, StyleSheet } from "react-native";
 import {
   RootStackNavigationProp,
@@ -6,10 +6,11 @@ import {
 } from "@/types/RootStackTypes";
 import { ExpensesContext } from "@/store/expenses-context";
 import IconButton from "@/components/atoms/IconButton";
-import Button from "@/components/atoms/Button";
 import ExpenseForm from "@/components/organisms/ExpenseForm";
 import { Colors } from "@/constants/Colors";
 import { ExpenseProps } from "@/types/ExpenseProps";
+import { storeExpense, updateExpense, deleteExpense } from "@/utils/http";
+import LoadingOverlay from "@/components/atoms/LoadingOverlay";
 
 type Props = {
   route?: RootStackRouteProp;
@@ -17,10 +18,15 @@ type Props = {
 };
 
 const ManageExpenses = ({ route, navigation }: Props) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const editedExpenseId = route?.params?.expenseId;
   const isEditing = Boolean(editedExpenseId);
-  const { expenses, addExpense, updateExpense, deleteExpense } =
-    useContext(ExpensesContext);
+  const {
+    expenses,
+    addExpense,
+    updateExpense: updateExpenseCtx,
+    deleteExpense: deleteExpenseCtx,
+  } = useContext(ExpensesContext);
 
   const selectedExpense = expenses.find(
     (expense: ExpenseProps) => expense.id === editedExpenseId
@@ -36,21 +42,28 @@ const ManageExpenses = ({ route, navigation }: Props) => {
     navigation?.goBack();
   };
 
-  const deleteHandler = () => {
-    deleteExpense(editedExpenseId || "");
+  const deleteHandler = async () => {
+    setIsSubmitting(true);
+    await deleteExpense(editedExpenseId || "");
+    deleteExpenseCtx(editedExpenseId || "");
     navigation?.goBack();
   };
 
-  const confirmHandler = (expenseData: ExpenseProps) => {
+  const confirmHandler = async (expenseData: ExpenseProps) => {
+    setIsSubmitting(true);
     if (isEditing) {
-      console.log(editedExpenseId);
-
-      updateExpense(editedExpenseId || "", expenseData);
+      updateExpenseCtx(editedExpenseId || "", expenseData);
+      await updateExpense(editedExpenseId || "", expenseData);
     } else {
-      addExpense(expenseData);
+      const id = await storeExpense(expenseData);
+      addExpense({ id, ...expenseData });
     }
     navigation?.goBack();
   };
+
+  if (isSubmitting) {
+    return <LoadingOverlay />;
+  }
 
   return (
     <View style={styles.container}>

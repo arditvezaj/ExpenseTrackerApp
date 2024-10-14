@@ -1,41 +1,9 @@
 import { createContext, useReducer } from "react";
 import { ExpenseProps } from "@/types/ExpenseProps";
 
-const ExpensesData = [
-  {
-    id: "e1",
-    date: new Date("2024-10-10"),
-    amount: 59.99,
-    description: "Lunch",
-  },
-  {
-    id: "e2",
-    date: new Date("2024-10-01"),
-    amount: 49.99,
-    description: "A pair of shoes",
-  },
-  {
-    id: "e3",
-    date: new Date("2024-07-20"),
-    amount: 19.99,
-    description: "Some bananas",
-  },
-  {
-    id: "e4",
-    date: new Date("2024-06-30"),
-    amount: 10.99,
-    description: "A book",
-  },
-  {
-    id: "e5",
-    date: new Date("2024-05-20"),
-    amount: 20.99,
-    description: "A pair of socks",
-  },
-];
-
 export const ExpensesContext = createContext({
   expenses: [],
+  setExpenses: (expenses: any) => {},
   addExpense: ({ description, amount, date }: ExpenseProps) => {},
   updateExpense: (
     id: string,
@@ -47,9 +15,10 @@ export const ExpensesContext = createContext({
 const expensesReducer = (state: any, action: any) => {
   switch (action.type) {
     case "ADD":
-      const id =
-        new Date().toString() + Math.random().toString(36).substring(7);
-      return [{ ...action.payload, id }, ...state];
+      return [action.payload, ...state];
+    case "SET":
+      const invertedExpenses = action.payload.reverse();
+      return invertedExpenses;
     case "UPDATE":
       const updatableExpenseIndex = state.findIndex(
         (expense: ExpenseProps) => expense.id === action.payload.id
@@ -72,7 +41,11 @@ const expensesReducer = (state: any, action: any) => {
 };
 
 const ExpensesContextProvider = ({ children }: React.PropsWithChildren) => {
-  const [expensesState, dispatch] = useReducer(expensesReducer, ExpensesData);
+  const [expensesState, dispatch] = useReducer(expensesReducer, []);
+
+  const setExpenses = (expenses: ExpenseProps[]) => {
+    dispatch({ type: "SET", payload: expenses });
+  };
 
   const addExpense = (expenseData: ExpenseProps) => {
     dispatch({ type: "ADD", payload: expenseData });
@@ -88,6 +61,7 @@ const ExpensesContextProvider = ({ children }: React.PropsWithChildren) => {
 
   const value = {
     expenses: expensesState,
+    setExpenses,
     addExpense,
     updateExpense,
     deleteExpense,
